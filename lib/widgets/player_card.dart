@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../controllers/settings_controller.dart';
 import '../models/player.dart';
 import 'cacho_score_grid.dart';
 
@@ -7,7 +9,7 @@ class PlayerCard extends StatelessWidget {
   final Player player;
   final bool isActive;
   final bool isLeader;
-  final void Function(String categoryKey) onCategoryTap;
+  final void Function(String categoryKey, TapDownDetails? details) onCategoryTap;
 
   const PlayerCard({
     super.key,
@@ -19,11 +21,12 @@ class PlayerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final grandesCount = context.watch<SettingsController>().grandesCount;
     final borderColor = isLeader
         ? const Color(0xFFF59E0B)
         : isActive
             ? const Color(0xFF10B981)
-            : const Color(0xFF2A3F4D);
+            : Theme.of(context).colorScheme.outline;
 
     final glowColor = isLeader
         ? const Color(0xFFF59E0B).withValues(alpha: 0.2)
@@ -33,7 +36,7 @@ class PlayerCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF15242C),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: borderColor,
@@ -59,7 +62,7 @@ class PlayerCard extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 64,
                 fontWeight: FontWeight.w900,
-                color: Colors.white.withValues(alpha: 0.03),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.03),
               ),
             ),
           ),
@@ -86,7 +89,7 @@ class PlayerCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: isLeader
                               ? const Color(0xFFFBBF24)
-                              : Colors.white,
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -123,8 +126,8 @@ class PlayerCard extends StatelessWidget {
                   children: [
                     Text(
                       player.isWinnerByDormida
-                          ? 'DORMIDA 🏆'
-                          : '${player.scoreCard.completedCategoriesCount}/11 llenas',
+                          ? 'GRANDE 2 🏆'
+                          : '${player.scoreCard.completedCategoriesCount}/${grandesCount == 2 ? 11 : 10} llenas',
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         color: const Color(0xFF64748B),

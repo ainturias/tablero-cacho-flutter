@@ -4,7 +4,7 @@ import 'player_card.dart';
 
 class GridViewWidget extends StatelessWidget {
   final Game game;
-  final void Function(String playerId, String playerName, String categoryKey) onCategoryTap;
+  final void Function(String playerId, String playerName, String categoryKey, TapDownDetails? details) onCategoryTap;
 
   const GridViewWidget({
     super.key,
@@ -14,8 +14,6 @@ class GridViewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final leader = game.leader;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: GridView.builder(
@@ -23,20 +21,20 @@ class GridViewWidget extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
-          childAspectRatio: 0.70,
+          childAspectRatio: 0.55,
         ),
         itemCount: game.players.length,
         itemBuilder: (context, index) {
           final player = game.players[index];
           final isActive = index == game.currentPlayerIndex;
-          final isLeader = leader != null && leader.id == player.id;
+          final isLeader = game.isPlayerLeading(player.id);
 
           return PlayerCard(
             player: player,
             isActive: isActive,
             isLeader: isLeader,
-            onCategoryTap: (categoryKey) =>
-                onCategoryTap(player.id, player.name, categoryKey),
+            onCategoryTap: (categoryKey, details) =>
+                onCategoryTap(player.id, player.name, categoryKey, details),
           );
         },
       ),

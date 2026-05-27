@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/score_card.dart';
+import '../controllers/settings_controller.dart';
 
 class CachoScoreGrid extends StatelessWidget {
   final ScoreCard scoreCard;
   final bool compact;
-  final void Function(String categoryKey)? onCellTap;
+  final void Function(String categoryKey, TapDownDetails? details)? onCellTap;
 
   const CachoScoreGrid({
     super.key,
@@ -16,6 +18,7 @@ class CachoScoreGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double spacing = compact ? 4.0 : 8.0;
+    final grandesCount = context.watch<SettingsController>().grandesCount;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -24,15 +27,15 @@ class CachoScoreGrid extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _buildCell('balas', compact ? 'B' : 'BALAS'),
+              child: _buildCell(context, 'balas', compact ? 'B' : 'BALAS'),
             ),
             SizedBox(width: spacing),
             Expanded(
-              child: _buildCell('escalera', compact ? 'E' : 'ESCALERA'),
+              child: _buildCell(context, 'escalera', compact ? 'E' : 'ESCALERA'),
             ),
             SizedBox(width: spacing),
             Expanded(
-              child: _buildCell('cuadras', compact ? 'C' : 'CUADRAS'),
+              child: _buildCell(context, 'cuadras', compact ? 'C' : 'CUADRAS'),
             ),
           ],
         ),
@@ -42,15 +45,15 @@ class CachoScoreGrid extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _buildCell('duques', compact ? 'D' : 'DUQUES'),
+              child: _buildCell(context, 'duques', compact ? 'D' : 'DUQUES'),
             ),
             SizedBox(width: spacing),
             Expanded(
-              child: _buildCell('full', compact ? 'F' : 'FULL'),
+              child: _buildCell(context, 'full', compact ? 'F' : 'FULL'),
             ),
             SizedBox(width: spacing),
             Expanded(
-              child: _buildCell('quinas', compact ? 'Q' : 'QUINAS'),
+              child: _buildCell(context, 'quinas', compact ? 'Q' : 'QUINAS'),
             ),
           ],
         ),
@@ -60,45 +63,47 @@ class CachoScoreGrid extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _buildCell('trenes', compact ? 'T' : 'TRENES'),
+              child: _buildCell(context, 'trenes', compact ? 'T' : 'TRENES'),
             ),
             SizedBox(width: spacing),
             Expanded(
-              child: _buildCell('poker', compact ? 'P' : 'PÓKER'),
+              child: _buildCell(context, 'poker', compact ? 'P' : 'PÓKER'),
             ),
             SizedBox(width: spacing),
             Expanded(
-              child: _buildCell('senas', compact ? 'S' : 'SENAS'),
+              child: _buildCell(context, 'senas', compact ? 'S' : 'SENAS'),
             ),
           ],
         ),
         SizedBox(height: spacing),
 
-        // Row 4: Grande, Dormida
+        // Row 4: Grande, Grande 2 (optional)
         Row(
           children: [
             Expanded(
-              child: _buildCell('grande', compact ? 'G' : 'GRANDE'),
+              child: _buildCell(context, 'grande', compact ? 'G' : 'GRANDE'),
             ),
-            SizedBox(width: spacing),
-            Expanded(
-              child: _buildCell('dormida', compact ? 'DO' : 'DORMIDA'),
-            ),
+            if (grandesCount == 2) ...[
+              SizedBox(width: spacing),
+              Expanded(
+                child: _buildCell(context, 'grande2', compact ? 'G2' : 'GRANDE 2'),
+              ),
+            ],
           ],
         ),
       ],
     );
   }
 
-  Widget _buildCell(String categoryKey, String label) {
+  Widget _buildCell(BuildContext context, String categoryKey, String label) {
     final entry = scoreCard.getEntry(categoryKey);
     final hasValue = entry.marked;
     final isTachado = entry.isTachado;
 
     Color? backgroundColor;
-    Color borderColor = const Color(0xFF2A3F4D);
-    Color textColor = Colors.white;
-    Color labelColor = const Color(0xFF94A3B8);
+    Color borderColor = Theme.of(context).colorScheme.outline;
+    Color textColor = Theme.of(context).colorScheme.onSurface;
+    Color labelColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
 
     if (hasValue) {
       if (isTachado) {
@@ -116,11 +121,14 @@ class CachoScoreGrid extends StatelessWidget {
     final double titleFontSize = compact ? 10.0 : 12.0;
     final double valueFontSize = compact ? 15.0 : 22.0;
 
+    TapDownDetails? tapDetails;
+
     return Material(
       color: backgroundColor ?? Colors.transparent,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
-        onTap: onCellTap != null ? () => onCellTap!(categoryKey) : null,
+        onTapDown: (details) => tapDetails = details,
+        onTap: onCellTap != null ? () => onCellTap!(categoryKey, tapDetails) : null,
         borderRadius: BorderRadius.circular(10),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),

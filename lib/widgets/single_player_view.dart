@@ -5,7 +5,7 @@ import 'cacho_score_grid.dart';
 
 class SinglePlayerView extends StatelessWidget {
   final Game game;
-  final void Function(String playerId, String playerName, String categoryKey) onCategoryTap;
+  final void Function(String playerId, String playerName, String categoryKey, TapDownDetails? details) onCategoryTap;
   final VoidCallback onNext;
   final VoidCallback onPrevious;
 
@@ -20,8 +20,7 @@ class SinglePlayerView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final player = game.currentPlayer;
-    final leader = game.leader;
-    final isLeader = leader != null && leader.id == player.id;
+    final isLeader = game.isPlayerLeading(player.id);
     final playerIndex = game.currentPlayerIndex + 1;
     final totalPlayers = game.players.length;
 
@@ -46,19 +45,19 @@ class SinglePlayerView extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF15242C),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isLeader
                       ? const Color(0xFFF59E0B).withValues(alpha: 0.5)
-                      : const Color(0xFF10B981).withValues(alpha: 0.3),
+                      : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: isLeader
                         ? const Color(0xFFF59E0B).withValues(alpha: 0.1)
-                        : const Color(0xFF10B981).withValues(alpha: 0.08),
+                        : Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                     blurRadius: 24,
                     spreadRadius: 2,
                   ),
@@ -83,7 +82,7 @@ class SinglePlayerView extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                             color: isLeader
                                 ? const Color(0xFFFBBF24)
-                                : Colors.white,
+                                : Theme.of(context).colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -92,7 +91,7 @@ class SinglePlayerView extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
 
-                  // Total points / Dormida state
+                  // Total points / Grande 2 win state
                   if (player.isWinnerByDormida) ...[
                     const SizedBox(height: 8),
                     Container(
@@ -103,7 +102,7 @@ class SinglePlayerView extends StatelessWidget {
                         border: Border.all(color: const Color(0xFFFBBF24).withValues(alpha: 0.4)),
                       ),
                       child: Text(
-                        'GANÓ DORMIDA 🏆',
+                        'GANÓ GRANDE 2 🏆',
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -150,8 +149,8 @@ class SinglePlayerView extends StatelessWidget {
                         child: CachoScoreGrid(
                           scoreCard: player.scoreCard,
                           compact: false,
-                          onCellTap: (categoryKey) =>
-                              onCategoryTap(player.id, player.name, categoryKey),
+                          onCellTap: (categoryKey, details) =>
+                              onCategoryTap(player.id, player.name, categoryKey, details),
                         ),
                       ),
                     ),

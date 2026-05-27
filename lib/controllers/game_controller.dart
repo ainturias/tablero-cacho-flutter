@@ -3,14 +3,18 @@ import '../models/game.dart';
 import '../models/player.dart';
 import '../models/score_card.dart';
 import '../services/local_storage_service.dart';
+import '../services/settings_service.dart';
 import '../utils/game_utils.dart';
+
+import 'dart:math';
 
 class GameController extends ChangeNotifier {
   final LocalStorageService _storage;
+  final SettingsService _settingsService;
   Game? _currentGame;
   bool _hasSavedGame = false;
 
-  GameController(this._storage) {
+  GameController(this._storage, this._settingsService) {
     _hasSavedGame = _storage.hasSavedGame();
   }
 
@@ -25,9 +29,12 @@ class GameController extends ChangeNotifier {
       return Player(id: generateId(), name: name);
     }).toList();
 
+    final randomIndex = Random().nextInt(players.length);
+
     _currentGame = Game(
       id: generateId(),
       players: players,
+      currentPlayerIndex: randomIndex,
     );
     _autoSave();
     notifyListeners();
@@ -86,32 +93,37 @@ class GameController extends ChangeNotifier {
       lastChange = 'Borrado: ${categoryKey.toUpperCase()}';
     }
 
-    // Determine if player won by Dormida
-    bool isWinnerByDormida = false;
-    if (categoryKey == 'dormida' && entry != null && entry.marked && !entry.isTachado) {
-      isWinnerByDormida = true;
+    // Determine if player won by Grande 2 (if behavior is instaWin)
+    bool isWinnerByGrande2 = false;
+    final behavior = _settingsService.grande2Behavior;
+    if (categoryKey == 'grande2' &&
+        entry != null &&
+        entry.marked &&
+        !entry.isTachado &&
+        behavior == 'instaWin') {
+      isWinnerByGrande2 = true;
     }
 
     final updatedPlayer = player.copyWith(
       scoreCard: newScoreCard,
-      isWinnerByDormida: isWinnerByDormida,
+      isWinnerByDormida: isWinnerByGrande2,
       lastChange: lastChange,
     );
 
     _currentGame!.players[playerIndex] = updatedPlayer;
     _currentGame!.updatedAt = DateTime.now();
 
-    // If won by dormida, finish game
-    if (isWinnerByDormida) {
+    // If won by Grande 2, finish game
+    if (isWinnerByGrande2) {
       _currentGame!.isFinished = true;
     } else {
-      // Check if dormida was unmarked and they were previously the winner, restore isFinished to false
-      if (categoryKey == 'dormida' && player.isWinnerByDormida && (entry == null || !entry.marked || entry.isTachado)) {
+      // Check if Grande 2 was unmarked and they were previously the winner, restore isFinished to false
+      if (categoryKey == 'grande2' && player.isWinnerByDormida && (entry == null || !entry.marked || entry.isTachado)) {
         _currentGame!.isFinished = false;
       }
     }
 
-    // Auto-advance to next player (only if we did a new score and it's not a dormida win, which ends the game)
+    // Auto-advance to next player (only if we did a new score and it's not a Grande 2 win, which ends the game)
     if (entry != null && entry.marked && !_currentGame!.isFinished) {
       // Only auto-advance if the player we scored is the current active player
       if (playerIndex == _currentGame!.currentPlayerIndex) {

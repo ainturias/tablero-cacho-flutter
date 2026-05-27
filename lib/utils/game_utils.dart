@@ -39,7 +39,7 @@ String formatShareText(List<Player> players) {
             : i == 2
                 ? '🥉'
                 : '  ${i + 1}.';
-    final scoreStr = player.isWinnerByDormida ? 'GANÓ POR DORMIDA 🏆' : '${player.total} pts';
+    final scoreStr = player.isWinnerByDormida ? 'GANÓ POR GRANDE 2 🏆' : '${player.total} pts';
     buffer.writeln('$medal ${player.name} — $scoreStr (${player.scoreCard.completedCategoriesCount}/11 llenas)');
   }
   buffer.writeln('\n📱 Tablero de Cacho');

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
 import '../models/game.dart';
+import '../models/score_card.dart';
 import '../widgets/game_summary.dart';
 import '../widgets/view_mode_selector.dart';
 import '../widgets/grid_view_widget.dart';
@@ -9,23 +11,112 @@ import '../widgets/single_player_view.dart';
 import '../widgets/list_view_widget.dart';
 import '../widgets/score_picker_modal.dart';
 import '../widgets/confirm_dialog.dart';
+import '../controllers/settings_controller.dart';
+import '../utils/game_utils.dart';
 import 'final_result_screen.dart';
+import 'settings_modal.dart';
 
 class GameScreen extends StatelessWidget {
   const GameScreen({super.key});
 
   void _showScorePicker(
-      BuildContext context, String playerId, String playerName, String categoryKey) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => ScorePickerModal(
-        playerId: playerId,
-        playerName: playerName,
-        categoryKey: categoryKey,
+      BuildContext context, String playerId, String playerName, String categoryKey, TapDownDetails? details) {
+    final settings = context.read<SettingsController>();
+    if (settings.fastScoring && details != null) {
+      _showFastScoreMenu(context, playerId, playerName, categoryKey, details);
+    } else {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => ScorePickerModal(
+          playerId: playerId,
+          playerName: playerName,
+          categoryKey: categoryKey,
+        ),
+      );
+    }
+  }
+
+  void _showFastScoreMenu(
+      BuildContext context, String playerId, String playerName, String categoryKey, TapDownDetails details) async {
+    final controller = context.read<GameController>();
+    final options = getCategoryOptions(context, categoryKey);
+    final player = controller.currentGame?.players.firstWhere((p) => p.id == playerId);
+    final entry = player?.scoreCard.getEntry(categoryKey);
+    final hasValue = entry != null && entry.marked;
+
+    final RenderBox overlay = Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        details.globalPosition,
+        details.globalPosition,
       ),
+      Offset.zero & overlay.size,
     );
+
+    final selected = await showMenu<String>(
+      context: context,
+      position: position,
+      color: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Theme.of(context).colorScheme.outline),
+      ),
+      items: [
+        if (hasValue) ...[
+          PopupMenuItem<String>(
+            value: 'clear',
+            child: Row(
+              children: [
+                const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 18),
+                const SizedBox(width: 8),
+                Text('Borrar anotación', style: GoogleFonts.inter(color: Colors.red, fontSize: 13)),
+              ],
+            ),
+          ),
+          const PopupMenuDivider(),
+        ],
+        ...options.map((option) {
+          final isTachadoVal = option.isTachado;
+          final color = isTachadoVal ? Colors.red : Theme.of(context).colorScheme.primary;
+          return PopupMenuItem<String>(
+            value: '${option.value}|${option.label}|${option.isTachado}|${option.mode ?? "normal"}',
+            child: Center(
+              child: Text(
+                isTachadoVal ? '0' : (categoryKey == 'grande2' && option.value == 0 ? '👑' : '${option.value}'),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+
+    if (selected != null) {
+      if (selected == 'clear') {
+        controller.updateScoreCategory(playerId, categoryKey, null);
+      } else {
+        final parts = selected.split('|');
+        final val = int.parse(parts[0]);
+        final isTachado = parts[2] == 'true';
+        final mode = parts[3];
+
+        final scoreEntry = ScoreEntry(
+          value: val,
+          label: isTachado ? 'X' : (mode == 'mano' ? 'M' : (mode == 'tres_tiros' ? '3T' : '')),
+          marked: true,
+          isTachado: isTachado,
+          mode: mode,
+        );
+        controller.updateScoreCategory(playerId, categoryKey, scoreEntry);
+      }
+      triggerHaptic();
+    }
   }
 
   void _showResetConfirm(BuildContext context) {
@@ -88,34 +179,77 @@ class GameScreen extends StatelessWidget {
               'Tablero de Cacho',
             ),
             actions: [
-              // View mode cycle button
-              IconButton(
-                icon: Icon(_getViewModeIcon(game.viewMode)),
-                tooltip: 'Cambiar vista',
-                onPressed: () {
-                  final modes = ViewMode.values;
-                  final nextIndex =
-                      (modes.indexOf(game.viewMode) + 1) % modes.length;
-                  controller.setViewMode(modes[nextIndex]);
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert_rounded),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'view':
+                      final modes = ViewMode.values;
+                      final nextIndex =
+                          (modes.indexOf(game.viewMode) + 1) % modes.length;
+                      controller.setViewMode(modes[nextIndex]);
+                      break;
+                    case 'settings':
+                      showSettingsModal(context);
+                      break;
+                    case 'finish':
+                      _showFinishConfirm(context);
+                      break;
+                    case 'reset':
+                      _showResetConfirm(context);
+                      break;
+                  }
                 },
-              ),
-              // Finish button
-              IconButton(
-                icon: const Icon(Icons.emoji_events_outlined),
-                tooltip: 'Finalizar partida',
-                onPressed: () => _showFinishConfirm(context),
-              ),
-              // Reset button
-              IconButton(
-                icon: const Icon(Icons.refresh_rounded),
-                tooltip: 'Reiniciar',
-                onPressed: () => _showResetConfirm(context),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'view',
+                    child: Row(
+                      children: [
+                        Icon(_getViewModeIcon(game.viewMode), size: 20),
+                        const SizedBox(width: 12),
+                        const Text('Cambiar Vista'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings_outlined, size: 20),
+                        SizedBox(width: 12),
+                        Text('Ajustes'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem(
+                    value: 'finish',
+                    child: Row(
+                      children: [
+                        Icon(Icons.emoji_events_outlined, color: Color(0xFF10B981), size: 20),
+                        SizedBox(width: 12),
+                        Text('Finalizar Partida', style: TextStyle(color: Color(0xFF10B981))),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'reset',
+                    child: Row(
+                      children: [
+                        Icon(Icons.refresh_rounded, color: Color(0xFFEF4444), size: 20),
+                        SizedBox(width: 12),
+                        Text('Reiniciar Partida', style: TextStyle(color: Color(0xFFEF4444))),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
           body: Column(
             children: [
-              GameSummaryWidget(game: game),
+              if (context.watch<SettingsController>().showHeader)
+                GameSummaryWidget(game: game),
               ViewModeSelector(
                 currentMode: game.viewMode,
                 onChanged: controller.setViewMode,
@@ -140,13 +274,13 @@ class GameScreen extends StatelessWidget {
         return GridViewWidget(
           key: const ValueKey('grid'),
           game: game,
-          onCategoryTap: (id, name, catKey) => _showScorePicker(context, id, name, catKey),
+          onCategoryTap: (id, name, catKey, details) => _showScorePicker(context, id, name, catKey, details),
         );
       case ViewMode.single:
         return SinglePlayerView(
           key: const ValueKey('single'),
           game: game,
-          onCategoryTap: (id, name, catKey) => _showScorePicker(context, id, name, catKey),
+          onCategoryTap: (id, name, catKey, details) => _showScorePicker(context, id, name, catKey, details),
           onNext: controller.nextPlayer,
           onPrevious: controller.previousPlayer,
         );

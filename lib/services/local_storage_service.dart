@@ -24,6 +24,8 @@ class LocalStorageService {
       final json = jsonDecode(jsonString) as Map<String, dynamic>;
       return Game.fromJson(json);
     } catch (e) {
+      // Clear corrupt data so we don't get stuck with a broken save
+      _box.delete(_gameKey);
       return null;
     }
   }

@@ -59,7 +59,7 @@ class ScoreCard {
   final ScoreEntry full;
   final ScoreEntry poker;
   final ScoreEntry grande;
-  final ScoreEntry dormida;
+  final ScoreEntry grande2;
 
   ScoreCard({
     ScoreEntry? balas,
@@ -72,7 +72,7 @@ class ScoreCard {
     ScoreEntry? full,
     ScoreEntry? poker,
     ScoreEntry? grande,
-    ScoreEntry? dormida,
+    ScoreEntry? grande2,
   })  : balas = balas ?? ScoreEntry.empty(),
         duques = duques ?? ScoreEntry.empty(),
         trenes = trenes ?? ScoreEntry.empty(),
@@ -83,7 +83,7 @@ class ScoreCard {
         full = full ?? ScoreEntry.empty(),
         poker = poker ?? ScoreEntry.empty(),
         grande = grande ?? ScoreEntry.empty(),
-        dormida = dormida ?? ScoreEntry.empty();
+        grande2 = grande2 ?? ScoreEntry.empty();
 
   ScoreCard copyWith({
     ScoreEntry? balas,
@@ -96,7 +96,7 @@ class ScoreCard {
     ScoreEntry? full,
     ScoreEntry? poker,
     ScoreEntry? grande,
-    ScoreEntry? dormida,
+    ScoreEntry? grande2,
   }) {
     return ScoreCard(
       balas: balas ?? this.balas,
@@ -109,7 +109,7 @@ class ScoreCard {
       full: full ?? this.full,
       poker: poker ?? this.poker,
       grande: grande ?? this.grande,
-      dormida: dormida ?? this.dormida,
+      grande2: grande2 ?? this.grande2,
     );
   }
 
@@ -125,7 +125,7 @@ class ScoreCard {
     sum += full.value ?? 0;
     sum += poker.value ?? 0;
     sum += grande.value ?? 0;
-    // Dormida is a special win condition, it does not add points
+    sum += grande2.value ?? 0;
     return sum;
   }
 
@@ -141,7 +141,7 @@ class ScoreCard {
     if (full.marked) count++;
     if (poker.marked) count++;
     if (grande.marked) count++;
-    if (dormida.marked) count++;
+    if (grande2.marked) count++;
     return count;
   }
 
@@ -167,8 +167,8 @@ class ScoreCard {
         return poker;
       case 'grande':
         return grande;
-      case 'dormida':
-        return dormida;
+      case 'grande2':
+        return grande2;
       default:
         throw ArgumentError('Invalid category key: $key');
     }
@@ -197,8 +197,8 @@ class ScoreCard {
         return copyWith(poker: cleanEntry);
       case 'grande':
         return copyWith(grande: cleanEntry);
-      case 'dormida':
-        return copyWith(dormida: cleanEntry);
+      case 'grande2':
+        return copyWith(grande2: cleanEntry);
       default:
         throw ArgumentError('Invalid category key: $key');
     }
@@ -215,7 +215,7 @@ class ScoreCard {
         'full': full.toJson(),
         'poker': poker.toJson(),
         'grande': grande.toJson(),
-        'dormida': dormida.toJson(),
+        'grande2': grande2.toJson(),
       };
 
   factory ScoreCard.fromJson(Map<String, dynamic> json) => ScoreCard(
@@ -229,6 +229,8 @@ class ScoreCard {
         full: ScoreEntry.fromJson(json['full'] as Map<String, dynamic>),
         poker: ScoreEntry.fromJson(json['poker'] as Map<String, dynamic>),
         grande: ScoreEntry.fromJson(json['grande'] as Map<String, dynamic>),
-        dormida: ScoreEntry.fromJson(json['dormida'] as Map<String, dynamic>),
+        grande2: json.containsKey('grande2') 
+            ? ScoreEntry.fromJson(json['grande2'] as Map<String, dynamic>)
+            : ScoreEntry.empty(),
       );
 }

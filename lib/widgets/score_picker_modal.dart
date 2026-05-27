@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
+import '../controllers/settings_controller.dart';
 import '../models/score_card.dart';
 import '../utils/game_utils.dart';
 
@@ -35,96 +36,111 @@ class ScorePickerModal extends StatefulWidget {
   State<ScorePickerModal> createState() => _ScorePickerModalState();
 }
 
+List<CategoryOption> getCategoryOptions(BuildContext context, String categoryKey) {
+  switch (categoryKey) {
+    case 'balas':
+      return const [
+        CategoryOption(value: 0, label: 'Tachar Balas', isTachado: true),
+        CategoryOption(value: 1, label: '1 Bala', mode: 'normal'),
+        CategoryOption(value: 2, label: '2 Balas', mode: 'normal'),
+        CategoryOption(value: 3, label: '3 Balas', mode: 'normal'),
+        CategoryOption(value: 4, label: '4 Balas', mode: 'normal'),
+        CategoryOption(value: 5, label: '5 Balas', mode: 'normal'),
+      ];
+    case 'duques':
+      return const [
+        CategoryOption(value: 0, label: 'Tachar Duques', isTachado: true),
+        CategoryOption(value: 2, label: '1 Duque', mode: 'normal'),
+        CategoryOption(value: 4, label: '2 Duques', mode: 'normal'),
+        CategoryOption(value: 6, label: '3 Duques', mode: 'normal'),
+        CategoryOption(value: 8, label: '4 Duques', mode: 'normal'),
+        CategoryOption(value: 10, label: '5 Duques', mode: 'normal'),
+      ];
+    case 'trenes':
+      return const [
+        CategoryOption(value: 0, label: 'Tachar Trenes', isTachado: true),
+        CategoryOption(value: 3, label: '1 Tren', mode: 'normal'),
+        CategoryOption(value: 6, label: '2 Trenes', mode: 'normal'),
+        CategoryOption(value: 9, label: '3 Trenes', mode: 'normal'),
+        CategoryOption(value: 12, label: '4 Trenes', mode: 'normal'),
+        CategoryOption(value: 15, label: '5 Trenes', mode: 'normal'),
+      ];
+    case 'cuadras':
+      return const [
+        CategoryOption(value: 0, label: 'Tachar Cuadras', isTachado: true),
+        CategoryOption(value: 4, label: '1 Cuadra', mode: 'normal'),
+        CategoryOption(value: 8, label: '2 Cuadras', mode: 'normal'),
+        CategoryOption(value: 12, label: '3 Cuadras', mode: 'normal'),
+        CategoryOption(value: 16, label: '4 Cuadras', mode: 'normal'),
+        CategoryOption(value: 20, label: '5 Cuadras', mode: 'normal'),
+      ];
+    case 'quinas':
+      return const [
+        CategoryOption(value: 0, label: 'Tachar Quinas', isTachado: true),
+        CategoryOption(value: 5, label: '1 Quina', mode: 'normal'),
+        CategoryOption(value: 10, label: '2 Quinas', mode: 'normal'),
+        CategoryOption(value: 15, label: '3 Quinas', mode: 'normal'),
+        CategoryOption(value: 20, label: '4 Quinas', mode: 'normal'),
+        CategoryOption(value: 25, label: '5 Quinas', mode: 'normal'),
+      ];
+    case 'senas':
+      return const [
+        CategoryOption(value: 0, label: 'Tachar Senas', isTachado: true),
+        CategoryOption(value: 6, label: '1 Sena', mode: 'normal'),
+        CategoryOption(value: 12, label: '2 Senas', mode: 'normal'),
+        CategoryOption(value: 18, label: '3 Senas', mode: 'normal'),
+        CategoryOption(value: 24, label: '4 Senas', mode: 'normal'),
+        CategoryOption(value: 30, label: '5 Senas', mode: 'normal'),
+      ];
+    case 'escalera':
+      return const [
+        CategoryOption(value: 0, label: 'Tachar Escalera', isTachado: true),
+        CategoryOption(value: 20, label: 'Escalera de 3 tiros', mode: 'tres_tiros'),
+        CategoryOption(value: 25, label: 'Escalera de mano', mode: 'mano'),
+      ];
+    case 'full':
+      return const [
+        CategoryOption(value: 0, label: 'Tachar Full', isTachado: true),
+        CategoryOption(value: 30, label: 'Full de 3 tiros', mode: 'tres_tiros'),
+        CategoryOption(value: 35, label: 'Full de mano', mode: 'mano'),
+      ];
+    case 'poker':
+      return const [
+        CategoryOption(value: 0, label: 'Tachar Póker', isTachado: true),
+        CategoryOption(value: 40, label: 'Póker de 3 tiros', mode: 'tres_tiros'),
+        CategoryOption(value: 45, label: 'Póker de mano', mode: 'mano'),
+      ];
+    case 'grande':
+      final isMano = context.read<SettingsController>().grande1Mano;
+      return [
+        const CategoryOption(value: 0, label: 'Tachar Grande', isTachado: true),
+        const CategoryOption(value: 50, label: 'Grande de mesa', mode: 'normal'),
+        if (isMano)
+          const CategoryOption(value: 55, label: 'Grande de mano', mode: 'mano'),
+      ];
+    case 'grande2':
+      final isInstaWin = context.read<SettingsController>().grande2Behavior == 'instaWin';
+      final isMano = context.read<SettingsController>().grande1Mano;
+      return [
+        const CategoryOption(value: 0, label: 'Tachar Grande 2', isTachado: true),
+        if (isInstaWin)
+          const CategoryOption(value: 0, label: 'Ganó Grande 2 (Victoria)', mode: 'normal')
+        else ...[
+          const CategoryOption(value: 50, label: 'Grande 2 de mesa', mode: 'normal'),
+          if (isMano)
+            const CategoryOption(value: 55, label: 'Grande 2 de mano', mode: 'mano'),
+        ],
+      ];
+    default:
+      return const [];
+  }
+}
+
 class _ScorePickerModalState extends State<ScorePickerModal> {
   bool _forceEditMode = false;
 
   List<CategoryOption> _getOptions() {
-    switch (widget.categoryKey) {
-      case 'balas':
-        return const [
-          CategoryOption(value: 0, label: 'Tachar Balas', isTachado: true),
-          CategoryOption(value: 1, label: '1 Bala (de As)', mode: 'normal'),
-          CategoryOption(value: 2, label: '2 Balas (de As)', mode: 'normal'),
-          CategoryOption(value: 3, label: '3 Balas (de As)', mode: 'normal'),
-          CategoryOption(value: 4, label: '4 Balas (de As)', mode: 'normal'),
-          CategoryOption(value: 5, label: '5 Balas (de As)', mode: 'normal'),
-        ];
-      case 'duques':
-        return const [
-          CategoryOption(value: 0, label: 'Tachar Duques', isTachado: true),
-          CategoryOption(value: 2, label: '1 Duque (de 2)', mode: 'normal'),
-          CategoryOption(value: 4, label: '2 Duques (de 2)', mode: 'normal'),
-          CategoryOption(value: 6, label: '3 Duques (de 2)', mode: 'normal'),
-          CategoryOption(value: 8, label: '4 Duques (de 2)', mode: 'normal'),
-          CategoryOption(value: 10, label: '5 Duques (de 2)', mode: 'normal'),
-        ];
-      case 'trenes':
-        return const [
-          CategoryOption(value: 0, label: 'Tachar Trenes', isTachado: true),
-          CategoryOption(value: 3, label: '1 Tren (de 3)', mode: 'normal'),
-          CategoryOption(value: 6, label: '2 Trenes (de 3)', mode: 'normal'),
-          CategoryOption(value: 9, label: '3 Trenes (de 3)', mode: 'normal'),
-          CategoryOption(value: 12, label: '4 Trenes (de 3)', mode: 'normal'),
-          CategoryOption(value: 15, label: '5 Trenes (de 3)', mode: 'normal'),
-        ];
-      case 'cuadras':
-        return const [
-          CategoryOption(value: 0, label: 'Tachar Cuadras', isTachado: true),
-          CategoryOption(value: 4, label: '1 Cuadra (de 4)', mode: 'normal'),
-          CategoryOption(value: 8, label: '2 Cuadras (de 4)', mode: 'normal'),
-          CategoryOption(value: 12, label: '3 Cuadras (de 4)', mode: 'normal'),
-          CategoryOption(value: 16, label: '4 Cuadras (de 4)', mode: 'normal'),
-          CategoryOption(value: 20, label: '5 Cuadras (de 4)', mode: 'normal'),
-        ];
-      case 'quinas':
-        return const [
-          CategoryOption(value: 0, label: 'Tachar Quinas', isTachado: true),
-          CategoryOption(value: 5, label: '1 Quina (de 5)', mode: 'normal'),
-          CategoryOption(value: 10, label: '2 Quinas (de 5)', mode: 'normal'),
-          CategoryOption(value: 15, label: '3 Quinas (de 5)', mode: 'normal'),
-          CategoryOption(value: 20, label: '4 Quinas (de 5)', mode: 'normal'),
-          CategoryOption(value: 25, label: '5 Quinas (de 5)', mode: 'normal'),
-        ];
-      case 'senas':
-        return const [
-          CategoryOption(value: 0, label: 'Tachar Senas', isTachado: true),
-          CategoryOption(value: 6, label: '1 Sena (de 6)', mode: 'normal'),
-          CategoryOption(value: 12, label: '2 Senas (de 6)', mode: 'normal'),
-          CategoryOption(value: 18, label: '3 Senas (de 6)', mode: 'normal'),
-          CategoryOption(value: 24, label: '4 Senas (de 6)', mode: 'normal'),
-          CategoryOption(value: 30, label: '5 Senas (de 6)', mode: 'normal'),
-        ];
-      case 'escalera':
-        return const [
-          CategoryOption(value: 0, label: 'Tachar Escalera', isTachado: true),
-          CategoryOption(value: 20, label: 'Escalera de 3 tiros', mode: 'tres_tiros'),
-          CategoryOption(value: 25, label: 'Escalera de mano', mode: 'mano'),
-        ];
-      case 'full':
-        return const [
-          CategoryOption(value: 0, label: 'Tachar Full', isTachado: true),
-          CategoryOption(value: 30, label: 'Full de 3 tiros', mode: 'tres_tiros'),
-          CategoryOption(value: 35, label: 'Full de mano', mode: 'mano'),
-        ];
-      case 'poker':
-        return const [
-          CategoryOption(value: 0, label: 'Tachar Póker', isTachado: true),
-          CategoryOption(value: 40, label: 'Póker de 3 tiros', mode: 'tres_tiros'),
-          CategoryOption(value: 45, label: 'Póker de mano', mode: 'mano'),
-        ];
-      case 'grande':
-        return const [
-          CategoryOption(value: 0, label: 'Tachar Grande', isTachado: true),
-          CategoryOption(value: 50, label: 'Grande', mode: 'normal'),
-        ];
-      case 'dormida':
-        return const [
-          CategoryOption(value: 0, label: 'Tachar Dormida', isTachado: true),
-          CategoryOption(value: 0, label: 'Ganó Dormida (Victoria)', mode: 'normal'),
-        ];
-      default:
-        return const [];
-    }
+    return getCategoryOptions(context, widget.categoryKey);
   }
 
   void _selectOption(CategoryOption option) {
@@ -160,6 +176,7 @@ class _ScorePickerModalState extends State<ScorePickerModal> {
   }
 
   String _getCategoryTitle() {
+    if (widget.categoryKey == 'grande2') return 'GRANDE 2';
     return widget.categoryKey.toUpperCase();
   }
 
@@ -184,9 +201,20 @@ class _ScorePickerModalState extends State<ScorePickerModal> {
       case 'poker':
         return 'Cuatro dados del mismo valor';
       case 'grande':
-        return 'Cinco dados del mismo valor';
-      case 'dormida':
-        return 'Cinco dados iguales servidos (mano). ¡Gana el juego!';
+        final isMano = context.read<SettingsController>().grande1Mano;
+        return isMano
+            ? 'Cinco dados del mismo valor. Anota 50 pts (de mesa) o 55 pts (de mano).'
+            : 'Cinco dados del mismo valor. Anota 50 puntos.';
+      case 'grande2':
+        final isInstaWin = context.read<SettingsController>().grande2Behavior == 'instaWin';
+        final isMano = context.read<SettingsController>().grande1Mano;
+        if (isInstaWin) {
+          return 'Cinco dados iguales en tu segundo tiro. ¡Gana la partida directamente!';
+        } else {
+          return isMano
+              ? 'Cinco dados iguales en tu segundo tiro. Anota 50 pts (de mesa) o 55 pts (de mano).'
+              : 'Cinco dados iguales en tu segundo tiro. Anota 50 puntos.';
+        }
       default:
         return '';
     }
@@ -204,9 +232,9 @@ class _ScorePickerModalState extends State<ScorePickerModal> {
     final showOptionsMenu = hasValue && !_forceEditMode;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF15242C),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         child: Padding(
@@ -220,7 +248,7 @@ class _ScorePickerModalState extends State<ScorePickerModal> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2A3F4D),
+                  color: Theme.of(context).colorScheme.outline,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -240,7 +268,7 @@ class _ScorePickerModalState extends State<ScorePickerModal> {
                 style: GoogleFonts.inter(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
@@ -298,7 +326,7 @@ class _ScorePickerModalState extends State<ScorePickerModal> {
                             widget.categoryKey == 'full' ||
                             widget.categoryKey == 'poker' ||
                             widget.categoryKey == 'grande' ||
-                            widget.categoryKey == 'dormida') {
+                            widget.categoryKey == 'grande2') {
                           buttonColor = const Color(0xFF3B82F6); // Blue for special hands
                         }
 
@@ -325,13 +353,13 @@ class _ScorePickerModalState extends State<ScorePickerModal> {
                                     style: GoogleFonts.inter(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                      color: Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                   Text(
                                     option.isTachado
                                         ? 'X'
-                                        : (widget.categoryKey == 'dormida' && option.value == 0 && !option.isTachado
+                                        : (widget.categoryKey == 'grande2' && option.value == 0 && !option.isTachado
                                             ? '👑'
                                             : '${option.value}'),
                                     style: GoogleFonts.inter(
@@ -399,7 +427,7 @@ class _ScorePickerModalState extends State<ScorePickerModal> {
               style: GoogleFonts.inter(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const Spacer(),
