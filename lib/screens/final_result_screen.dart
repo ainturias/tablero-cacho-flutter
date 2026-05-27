@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
+import '../controllers/settings_controller.dart';
 import '../models/player.dart';
-import '../utils/game_utils.dart';
 
 class FinalResultScreen extends StatelessWidget {
   const FinalResultScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final grandesCount = context.watch<SettingsController>().grandesCount;
     return Consumer<GameController>(
       builder: (context, controller, _) {
-        final game = controller.currentGame!;
+        final game = controller.currentGame;
+        if (game == null) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
         
         // Sort: Winner by Dormida always comes first. Otherwise, sort by points.
         final sorted = List<Player>.from(game.players)
@@ -23,8 +30,29 @@ class FinalResultScreen extends StatelessWidget {
             return b.total.compareTo(a.total);
           });
 
+        // Determine ranks
+        final List<int> ranks = [];
+        int currentRank = 1;
+        for (int i = 0; i < sorted.length; i++) {
+          if (i > 0) {
+            final prev = sorted[i - 1];
+            final curr = sorted[i];
+            if (prev.isWinnerByDormida != curr.isWinnerByDormida ||
+                prev.total != curr.total) {
+              currentRank = i + 1;
+            }
+          }
+          ranks.add(currentRank);
+        }
+
+        // Determine winners
+        final highestScore = sorted.first.total;
+        final isGrande2Winner = sorted.first.isWinnerByDormida;
+        final winners = sorted.where((p) => 
+            p.isWinnerByDormida || (!isGrande2Winner && p.total == highestScore)).toList();
+
         return Scaffold(
-          backgroundColor: const Color(0xFF0F1A20),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -62,40 +90,24 @@ class FinalResultScreen extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 32),
 
                   // Winner card
-                  if (sorted.isNotEmpty) _buildWinnerCard(sorted.first),
+                  if (winners.isNotEmpty) _buildWinnerCard(context, winners, grandesCount),
                   const SizedBox(height: 24),
 
                   // Ranking list
                   ...sorted.asMap().entries.map((entry) {
-                    return _buildRankingRow(entry.key, entry.value);
+                    final rank = ranks[entry.key];
+                    return _buildRankingRow(context, rank, entry.value, grandesCount);
                   }),
 
                   const SizedBox(height: 32),
 
                   // Buttons
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      final text = formatShareText(game.players);
-                      Clipboard.setData(ClipboardData(text: text));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Resultado copiado al portapapeles'),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.share_rounded),
-                    label: Text(
-                      'Compartir Resultado',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
                   OutlinedButton(
                     onPressed: () {
                       controller.returnToBoard();
@@ -129,7 +141,11 @@ class FinalResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWinnerCard(Player winner) {
+  Widget _buildWinnerCard(BuildContext context, List<Player> winners, int grandesCount) {
+    final isTie = winners.length > 1;
+    final winner = winners.first;
+    final names = winners.map((p) => p.name).join(' y ');
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -151,62 +167,75 @@ class FinalResultScreen extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            '👑',
+            isTie ? '🤝' : '👑',
             style: GoogleFonts.inter(fontSize: 36),
           ),
           const SizedBox(height: 8),
-          Text(
-            winner.name,
-            style: GoogleFonts.inter(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFFFBBF24),
+          if (isTie)
+            Text(
+              '¡EMPATE!',
+              style: GoogleFonts.inter(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFFFBBF24),
+                letterSpacing: 1.2,
+              ),
             ),
+          Text(
+            names,
+            style: GoogleFonts.inter(
+              fontSize: isTie ? 20 : 24,
+              fontWeight: FontWeight.w800,
+              color: isTie ? Theme.of(context).colorScheme.onSurface : const Color(0xFFFBBF24),
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
           Text(
-            winner.isWinnerByDormida ? 'GANÓ DORMIDA 🏆' : '${winner.total} puntos',
+            winner.isWinnerByDormida ? 'GANARON POR GRANDE 2 🏆' : '${winner.total} puntos',
             style: GoogleFonts.inter(
               fontSize: winner.isWinnerByDormida ? 22 : 32,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '${winner.scoreCard.completedCategoriesCount}/11 categorías llenas',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: const Color(0xFF94A3B8),
+          if (!isTie) ...[
+            const SizedBox(height: 4),
+            Text(
+              '${winner.scoreCard.completedCategoriesCount}/${grandesCount == 2 ? 11 : 10} categorías llenas',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFF94A3B8),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildRankingRow(int index, Player player) {
-    final isFirst = index == 0;
-    final medal = index == 0
+  Widget _buildRankingRow(BuildContext context, int rank, Player player, int grandesCount) {
+    final isFirst = rank == 1;
+    final medal = rank == 1
         ? '🥇'
-        : index == 1
+        : rank == 2
             ? '🥈'
-            : index == 2
+            : rank == 3
                 ? '🥉'
                 : null;
-
+ 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: isFirst
             ? const Color(0xFFF59E0B).withValues(alpha: 0.08)
-            : const Color(0xFF15242C),
+            : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isFirst
               ? const Color(0xFFF59E0B).withValues(alpha: 0.3)
-              : const Color(0xFF2A3F4D),
+              : Theme.of(context).colorScheme.outline,
         ),
       ),
       child: Row(
@@ -217,7 +246,7 @@ class FinalResultScreen extends StatelessWidget {
             child: medal != null
                 ? Text(medal, style: const TextStyle(fontSize: 20))
                 : Text(
-                    '${index + 1}',
+                    '$rank',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -237,13 +266,13 @@ class FinalResultScreen extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   player.isWinnerByDormida
-                      ? 'Victoria por Dormida'
-                      : '${player.scoreCard.completedCategoriesCount}/11 llenas',
+                      ? 'Victoria por Grande 2'
+                      : '${player.scoreCard.completedCategoriesCount}/${grandesCount == 2 ? 11 : 10} llenas',
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     color: const Color(0xFF64748B),
@@ -254,11 +283,11 @@ class FinalResultScreen extends StatelessWidget {
           ),
           // Total
           Text(
-            player.isWinnerByDormida ? 'DORMIDA' : '${player.total}',
+            player.isWinnerByDormida ? 'GRANDE 2' : '${player.total}',
             style: GoogleFonts.inter(
               fontSize: player.isWinnerByDormida ? 15 : 20,
               fontWeight: FontWeight.w800,
-              color: isFirst ? const Color(0xFFFBBF24) : Colors.white,
+              color: isFirst ? const Color(0xFFFBBF24) : Theme.of(context).colorScheme.onSurface,
             ),
           ),
           if (!player.isWinnerByDormida) ...[

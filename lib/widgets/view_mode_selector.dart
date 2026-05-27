@@ -20,9 +20,9 @@ class ViewModeSelector extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: const Color(0xFF15242C),
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF2A3F4D)),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Row(
           children: ViewMode.values.map((mode) {
@@ -50,7 +50,7 @@ class ViewModeSelector extends StatelessWidget {
                         size: 16,
                         color: isSelected
                             ? Colors.white
-                            : const Color(0xFF94A3B8),
+                            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -61,7 +61,7 @@ class ViewModeSelector extends StatelessWidget {
                               isSelected ? FontWeight.w700 : FontWeight.w500,
                           color: isSelected
                               ? Colors.white
-                              : const Color(0xFF94A3B8),
+                              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     ],

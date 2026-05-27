@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../controllers/game_controller.dart';
+import '../controllers/settings_controller.dart';
 import '../utils/game_utils.dart';
 
 class StartScreen extends StatefulWidget {
@@ -30,6 +31,15 @@ class _StartScreenState extends State<StartScreen>
       curve: Curves.easeOut,
     );
     _fadeController.forward();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final settings = context.read<SettingsController>();
+        if (settings.lastNames.isNotEmpty) {
+          _namesController.text = settings.lastNames;
+        }
+      }
+    });
   }
 
   @override
@@ -52,6 +62,12 @@ class _StartScreenState extends State<StartScreen>
 
     final controller = context.read<GameController>();
     controller.createGame(names);
+
+    // Guardar los nombres para la próxima vez
+    if (mounted) {
+      context.read<SettingsController>().setLastNames(_namesController.text);
+    }
+
     triggerHaptic();
   }
 
@@ -96,19 +112,20 @@ class _StartScreenState extends State<StartScreen>
 
                 // Title
                 Text(
-                  'Tablero de Cacho',
+                  'Tablero de Cacho de los Bolomanes',
                   style: GoogleFonts.inter(
-                    fontSize: 32,
+                    fontSize: 28, // Un poco más pequeño para que quepa bien
                     fontWeight: FontWeight.w800,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     letterSpacing: -0.5,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
 
                 // Subtitle
                 Text(
-                  'Anota tus resultados de forma rápida',
+                  'Mauro se la come',
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     color: const Color(0xFF94A3B8),
@@ -118,57 +135,71 @@ class _StartScreenState extends State<StartScreen>
                 ),
                 const SizedBox(height: 48),
 
-                // Names input
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Nombres de jugadores',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                // Configuration Card
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                      width: 1,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _namesController,
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
-                  decoration: const InputDecoration(
-                    hintText: 'Alex, Deivid, Jose',
-                    prefixIcon:
-                        Icon(Icons.people_outline, color: Color(0xFF94A3B8)),
-                  ),
-                  textCapitalization: TextCapitalization.words,
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Separados por comas o espacios. Si dejas vacío, se usarán nombres por defecto.',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: const Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Names input
+                      Text(
+                        'Nombres de jugadores',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _namesController,
+                        style: GoogleFonts.inter(color: Theme.of(context).colorScheme.onSurface, fontSize: 15),
+                        decoration: const InputDecoration(
+                          hintText: 'Alex, Deivid, Jose',
+                          prefixIcon: Icon(Icons.people_outline, color: Color(0xFF94A3B8)),
+                        ),
+                        textCapitalization: TextCapitalization.words,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Separados por comas o espacios. Si dejas vacío, se usarán nombres por defecto.',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
 
-                // Player count selector
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Cantidad de jugadores',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                      // Player count selector
+                      Text(
+                        'Cantidad de jugadores',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildPlayerCountSelector(),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                _buildPlayerCountSelector(),
-                const SizedBox(height: 40),
+                const SizedBox(height: 36),
 
                 // Start button
                 ElevatedButton(
@@ -213,7 +244,7 @@ class _StartScreenState extends State<StartScreen>
 
                 // Footer
                 Text(
-                  'Solo para anotar resultados con dados físicos 🎲',
+                  'programming by ainturias',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: const Color(0xFF475569),
@@ -229,56 +260,83 @@ class _StartScreenState extends State<StartScreen>
   }
 
   Widget _buildPlayerCountSelector() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: List.generate(9, (i) {
-        final count = i + 2;
-        final isSelected = count == _playerCount;
-
-        return GestureDetector(
-          onTap: () {
-            setState(() => _playerCount = count);
-            triggerHaptic();
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 58,
-            height: 44,
-            decoration: BoxDecoration(
+    Widget buildItem(int count) {
+      final isSelected = count == _playerCount;
+      return GestureDetector(
+        onTap: () {
+          setState(() => _playerCount = count);
+          triggerHaptic();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 44,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xFF10B981)
+                : Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
               color: isSelected
                   ? const Color(0xFF10B981)
-                  : const Color(0xFF15242C),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFF2A3F4D),
-                width: isSelected ? 2 : 1,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 2),
-                      )
-                    ]
-                  : null,
+                  : Theme.of(context).colorScheme.outline,
+              width: isSelected ? 2 : 1,
             ),
-            child: Center(
-              child: Text(
-                '$count',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? Colors.white : const Color(0xFF94A3B8),
-                ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 2),
+                    )
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: Text(
+              '$count',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ),
-        );
-      }),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: buildItem(2)),
+            const SizedBox(width: 8),
+            Expanded(child: buildItem(3)),
+            const SizedBox(width: 8),
+            Expanded(child: buildItem(4)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: buildItem(5)),
+            const SizedBox(width: 8),
+            Expanded(child: buildItem(6)),
+            const SizedBox(width: 8),
+            Expanded(child: buildItem(7)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: buildItem(8)),
+            const SizedBox(width: 8),
+            Expanded(child: buildItem(9)),
+            const SizedBox(width: 8),
+            Expanded(child: buildItem(10)),
+          ],
+        ),
+      ],
     );
   }
 }

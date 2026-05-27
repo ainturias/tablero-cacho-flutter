@@ -32,6 +32,12 @@ class Game {
     return sorted.first;
   }
 
+  bool isPlayerLeading(String playerId) {
+    if (players.every((p) => p.total == 0)) return false;
+    final player = players.firstWhere((p) => p.id == playerId);
+    return player.total == maxTotal;
+  }
+
   int get currentRound {
     if (players.isEmpty) return 1;
     final minTurns = players.map((p) => p.scoreCard.completedCategoriesCount).reduce(

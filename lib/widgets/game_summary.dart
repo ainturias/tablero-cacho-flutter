@@ -16,25 +16,28 @@ class GameSummaryWidget extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF15242C),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF2A3F4D)),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Row(
         children: [
           _buildInfoChip(
+            context,
             '🎯',
             currentPlayer.name,
             'Turno',
           ),
-          _buildDivider(),
+          _buildDivider(context),
           _buildInfoChip(
+            context,
             '🔄',
             'Ronda ${game.currentRound}',
             '',
           ),
-          _buildDivider(),
+          _buildDivider(context),
           _buildInfoChip(
+            context,
             '👑',
             leader?.name ?? 'Empate',
             leader != null ? '${leader.total} pts' : '',
@@ -44,7 +47,7 @@ class GameSummaryWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoChip(String emoji, String title, String subtitle) {
+  Widget _buildInfoChip(BuildContext context, String emoji, String title, String subtitle) {
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -56,7 +59,7 @@ class GameSummaryWidget extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -75,11 +78,11 @@ class GameSummaryWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider(BuildContext context) {
     return Container(
       width: 1,
       height: 32,
-      color: const Color(0xFF2A3F4D),
+      color: Theme.of(context).colorScheme.outline,
     );
   }
 }

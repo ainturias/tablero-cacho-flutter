@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/game.dart';
 import '../models/player.dart';
 import '../controllers/game_controller.dart';
+import '../controllers/settings_controller.dart';
 
 class ListViewWidget extends StatelessWidget {
   final Game game;
@@ -24,7 +25,7 @@ class ListViewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final leader = game.leader;
+    final grandesCount = context.watch<SettingsController>().grandesCount;
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -32,26 +33,26 @@ class ListViewWidget extends StatelessWidget {
       itemBuilder: (context, index) {
         final player = game.players[index];
         final isActive = index == game.currentPlayerIndex;
-        final isLeader = leader != null && leader.id == player.id;
+        final isLeader = game.isPlayerLeading(player.id);
 
-        return _buildPlayerRow(context, player, isActive, isLeader);
+        return _buildPlayerRow(context, player, isActive, isLeader, grandesCount);
       },
     );
   }
 
   Widget _buildPlayerRow(
-      BuildContext context, Player player, bool isActive, bool isLeader) {
+      BuildContext context, Player player, bool isActive, bool isLeader, int grandesCount) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF15242C),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isLeader
               ? const Color(0xFFF59E0B).withValues(alpha: 0.5)
               : isActive
                   ? const Color(0xFF10B981).withValues(alpha: 0.4)
-                  : const Color(0xFF2A3F4D),
+                  : Theme.of(context).colorScheme.outline,
           width: (isActive || isLeader) ? 1.5 : 1.0,
         ),
       ),
@@ -94,15 +95,15 @@ class ListViewWidget extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: isLeader
                               ? const Color(0xFFFBBF24)
-                              : Colors.white,
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         player.isWinnerByDormida
-                            ? 'DORMIDA 🏆'
-                            : '${player.scoreCard.completedCategoriesCount}/11 completadas',
+                            ? 'GRANDE 2 🏆'
+                            : '${player.scoreCard.completedCategoriesCount}/${grandesCount == 2 ? 11 : 10} completadas',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           color: const Color(0xFF64748B),
@@ -132,7 +133,7 @@ class ListViewWidget extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.85),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85),
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
