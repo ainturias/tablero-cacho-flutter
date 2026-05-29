@@ -127,7 +127,16 @@ class GameController extends ChangeNotifier {
     if (entry != null && entry.marked && !_currentGame!.isFinished) {
       // Only auto-advance if the player we scored is the current active player
       if (playerIndex == _currentGame!.currentPlayerIndex) {
-        _advanceToNextPlayer();
+        if (_currentGame!.viewMode == ViewMode.single) {
+          Future.delayed(const Duration(milliseconds: 800), () {
+            if (_currentGame != null && !_currentGame!.isFinished) {
+              _advanceToNextPlayer();
+              notifyListeners();
+            }
+          });
+        } else {
+          _advanceToNextPlayer();
+        }
       }
     }
 

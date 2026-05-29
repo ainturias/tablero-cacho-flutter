@@ -46,418 +46,87 @@ class SettingsModal extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Setting: Show header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).colorScheme.outline),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.table_rows_rounded,
-                        color: Color(0xFF3B82F6),
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Cabecera de Juego',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Mostrar turno, ronda y líder en la parte superior.',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: const Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: settings.showHeader,
-                      onChanged: (val) {
-                        settings.toggleShowHeader();
-                        triggerHaptic();
-                      },
-                      activeColor: const Color(0xFF10B981),
-                    ),
-                  ],
-                ),
+              // --- SECCIÓN: INTERFAZ ---
+              _buildSectionTitle('Interfaz', context),
+              const SizedBox(height: 12),
+              _buildSettingSwitch(
+                context,
+                icon: settings.isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                iconColor: const Color(0xFFF59E0B),
+                title: 'Modo Oscuro',
+                description: 'Cambiar entre tema claro y oscuro para el tablero.',
+                value: settings.isDarkMode,
+                onChanged: (val) {
+                  settings.toggleDarkMode();
+                  triggerHaptic();
+                },
               ),
-
-              const SizedBox(height: 16),
-
-              // Setting: Grandes Count
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).colorScheme.outline),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.casino_rounded,
-                            color: Color(0xFFF59E0B),
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Cantidad de Grandes',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '¿Con cuántas grandes deseas jugar?',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: const Color(0xFF94A3B8),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildGrandeOption(
-                            context,
-                            value: 1,
-                            label: '1 Grande',
-                            isSelected: settings.grandesCount == 1,
-                            onTap: () {
-                              settings.setGrandesCount(1);
-                              triggerHaptic();
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildGrandeOption(
-                            context,
-                            value: 2,
-                            label: '2 Grandes',
-                            isSelected: settings.grandesCount == 2,
-                            onTap: () {
-                              settings.setGrandesCount(2);
-                              triggerHaptic();
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 12),
+              _buildSettingSwitch(
+                context,
+                icon: Icons.table_rows_rounded,
+                iconColor: const Color(0xFF3B82F6),
+                title: 'Cabecera de Juego',
+                description: 'Mostrar turno, ronda y líder en la parte superior.',
+                value: settings.showHeader,
+                onChanged: (val) {
+                  settings.toggleShowHeader();
+                  triggerHaptic();
+                },
               ),
-
-              const SizedBox(height: 16),
-
-              // Setting: Grande 1 de Mano
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).colorScheme.outline),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.star_rounded,
-                        color: Color(0xFF8B5CF6),
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Grande de mano (55 pts)',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Permitir anotar 55 pts si se saca la primera Grande de un solo tiro.',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: const Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: settings.grande1Mano,
-                      onChanged: (val) {
-                        settings.toggleGrande1Mano();
-                        triggerHaptic();
-                      },
-                      activeColor: const Color(0xFF10B981),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 12),
+              _buildSettingSwitch(
+                context,
+                icon: Icons.view_carousel_rounded,
+                iconColor: const Color(0xFFEAB308),
+                title: 'Selector de Vistas',
+                description: 'Mostrar las opciones para cambiar entre vista de tarjetas, jugador y lista.',
+                value: settings.showViewSelector,
+                onChanged: (val) {
+                  settings.toggleShowViewSelector();
+                  triggerHaptic();
+                },
               ),
+              const SizedBox(height: 32),
 
-              const SizedBox(height: 16),
-
-              // Setting: Fast Scoring
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).colorScheme.outline),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF06B6D4).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.bolt_rounded,
-                        color: Color(0xFF06B6D4),
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Menú rápido',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Anota los puntajes con un menú desplegable pequeño y rápido sin abrir la ventana flotante.',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: const Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: settings.fastScoring,
-                      onChanged: (val) {
-                        settings.toggleFastScoring();
-                        triggerHaptic();
-                      },
-                      activeColor: const Color(0xFF10B981),
-                    ),
-                  ],
-                ),
+              // --- SECCIÓN: REGLAS DEL JUEGO ---
+              _buildSectionTitle('Reglas del Juego', context),
+              const SizedBox(height: 12),
+              _buildSettingSwitch(
+                context,
+                icon: Icons.star_rounded,
+                iconColor: const Color(0xFF8B5CF6),
+                title: 'Grande de mano (55 pts)',
+                description: 'Permitir anotar 55 pts si se saca la primera Grande de un solo tiro.',
+                value: settings.grande1Mano,
+                onChanged: (val) {
+                  settings.toggleGrande1Mano();
+                  triggerHaptic();
+                },
               ),
-
-              const SizedBox(height: 16),
-
-              // Setting: Light/Dark Mode
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).colorScheme.outline),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        settings.isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                        color: const Color(0xFFF59E0B),
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Modo Oscuro',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Cambiar entre tema claro y oscuro para el tablero.',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: const Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: settings.isDarkMode,
-                      onChanged: (val) {
-                        settings.toggleDarkMode();
-                        triggerHaptic();
-                      },
-                      activeColor: const Color(0xFF10B981),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Setting: Grande 2 Behavior (only show if grandesCount == 2)
+              const SizedBox(height: 12),
+              _buildGrandesCount(context, settings),
               if (settings.grandesCount == 2) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Theme.of(context).colorScheme.outline),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.emoji_events_rounded,
-                              color: Color(0xFF10B981),
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Regla de Grande 2',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Theme.of(context).colorScheme.onSurface,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '¿Qué ocurre al anotar la segunda grande?',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    color: const Color(0xFF94A3B8),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildBehaviorOption(
-                              context,
-                              value: 'points',
-                              label: 'Anotar 50 pts',
-                              isSelected: settings.grande2Behavior == 'points',
-                              onTap: () {
-                                settings.setGrande2Behavior('points');
-                                triggerHaptic();
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildBehaviorOption(
-                              context,
-                              value: 'instaWin',
-                              label: 'Ganar partida',
-                              isSelected: settings.grande2Behavior == 'instaWin',
-                              onTap: () {
-                                settings.setGrande2Behavior('instaWin');
-                                triggerHaptic();
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                const SizedBox(height: 12),
+                _buildGrande2Behavior(context, settings),
               ],
+              const SizedBox(height: 32),
+
+              // --- SECCIÓN: JUGABILIDAD ---
+              _buildSectionTitle('Jugabilidad', context),
+              const SizedBox(height: 12),
+              _buildSettingSwitch(
+                context,
+                icon: Icons.bolt_rounded,
+                iconColor: const Color(0xFF06B6D4),
+                title: 'Menú rápido',
+                description: 'Anota los puntajes con un menú desplegable pequeño y rápido sin abrir la ventana flotante.',
+                value: settings.fastScoring,
+                onChanged: (val) {
+                  settings.toggleFastScoring();
+                  triggerHaptic();
+                },
+              ),
               
               const SizedBox(height: 24),
               SizedBox(
@@ -477,6 +146,253 @@ class SettingsModal extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 4),
+      child: Text(
+        title.toUpperCase(),
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: Theme.of(context).colorScheme.primary,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingSwitch(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String description,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: const Color(0xFF10B981),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGrandesCount(BuildContext context, SettingsController settings) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.casino_rounded,
+                  color: Color(0xFFF59E0B),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cantidad de Grandes',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '¿Con cuántas grandes deseas jugar?',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildGrandeOption(
+                  context,
+                  value: 1,
+                  label: '1 Grande',
+                  isSelected: settings.grandesCount == 1,
+                  onTap: () {
+                    settings.setGrandesCount(1);
+                    triggerHaptic();
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildGrandeOption(
+                  context,
+                  value: 2,
+                  label: '2 Grandes',
+                  isSelected: settings.grandesCount == 2,
+                  onTap: () {
+                    settings.setGrandesCount(2);
+                    triggerHaptic();
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGrande2Behavior(BuildContext context, SettingsController settings) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.emoji_events_rounded,
+                  color: Color(0xFF10B981),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Regla de Grande 2',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '¿Qué ocurre al anotar la segunda grande?',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildBehaviorOption(
+                  context,
+                  value: 'points',
+                  label: 'Anotar 50 pts',
+                  isSelected: settings.grande2Behavior == 'points',
+                  onTap: () {
+                    settings.setGrande2Behavior('points');
+                    triggerHaptic();
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildBehaviorOption(
+                  context,
+                  value: 'instaWin',
+                  label: 'Ganar partida',
+                  isSelected: settings.grande2Behavior == 'instaWin',
+                  onTap: () {
+                    settings.setGrande2Behavior('instaWin');
+                    triggerHaptic();
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

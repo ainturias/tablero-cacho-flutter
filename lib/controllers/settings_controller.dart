@@ -7,6 +7,7 @@ class SettingsController extends ChangeNotifier {
   SettingsController(this._settingsService);
 
   bool get showHeader => _settingsService.showHeader;
+  bool get showViewSelector => _settingsService.showViewSelector;
   int get grandesCount => _settingsService.grandesCount;
   String get grande2Behavior => _settingsService.grande2Behavior;
   bool get grande1Mano => _settingsService.grande1Mano;
@@ -16,6 +17,11 @@ class SettingsController extends ChangeNotifier {
 
   Future<void> toggleShowHeader() async {
     await _settingsService.setShowHeader(!showHeader);
+    notifyListeners();
+  }
+
+  Future<void> toggleShowViewSelector() async {
+    await _settingsService.setShowViewSelector(!showViewSelector);
     notifyListeners();
   }
 

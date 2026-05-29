@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/game.dart';
+import '../models/player.dart';
 import 'cacho_score_grid.dart';
 
-class SinglePlayerView extends StatelessWidget {
+class SinglePlayerView extends StatefulWidget {
   final Game game;
   final void Function(String playerId, String playerName, String categoryKey, TapDownDetails? details) onCategoryTap;
   final VoidCallback onNext;
@@ -18,11 +19,115 @@ class SinglePlayerView extends StatelessWidget {
   });
 
   @override
+  State<SinglePlayerView> createState() => _SinglePlayerViewState();
+}
+
+class _SinglePlayerViewState extends State<SinglePlayerView> {
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: widget.game.currentPlayerIndex);
+  }
+
+  @override
+  void didUpdateWidget(SinglePlayerView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the game's active turn changed, animate to that player's page
+    if (widget.game.currentPlayerIndex != oldWidget.game.currentPlayerIndex) {
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(
+          widget.game.currentPlayerIndex,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _goToNextPage() {
+    if (_pageController.hasClients) {
+      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    }
+  }
+
+  void _goToPreviousPage() {
+    if (_pageController.hasClients) {
+      _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final player = game.currentPlayer;
-    final isLeader = game.isPlayerLeading(player.id);
-    final playerIndex = game.currentPlayerIndex + 1;
-    final totalPlayers = game.players.length;
+    return Column(
+      children: [
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            physics: const BouncingScrollPhysics(),
+            itemCount: widget.game.players.length,
+            itemBuilder: (context, index) {
+              final player = widget.game.players[index];
+              return _buildPlayerCard(context, player, index);
+            },
+          ),
+        ),
+        
+        // Navigation buttons below
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              // Previous
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _goToPreviousPage,
+                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                  label: Text(
+                    'Anterior',
+                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 52),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Next
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _goToNextPage,
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                  label: Text(
+                    'Siguiente',
+                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, 52),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildPlayerCard(BuildContext context, Player player, int index) {
+    final isLeader = widget.game.isPlayerLeading(player.id);
+    final isActiveTurn = index == widget.game.currentPlayerIndex;
+    final playerNumber = index + 1;
+    final totalPlayers = widget.game.players.length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -30,7 +135,7 @@ class SinglePlayerView extends StatelessWidget {
         children: [
           // Player indicator
           Text(
-            'Jugador $playerIndex de $totalPlayers',
+            'Jugador $playerNumber de $totalPlayers',
             style: GoogleFonts.inter(
               fontSize: 13,
               color: const Color(0xFF64748B),
@@ -48,16 +153,20 @@ class SinglePlayerView extends StatelessWidget {
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isLeader
-                      ? const Color(0xFFF59E0B).withValues(alpha: 0.5)
-                      : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                  width: 1.5,
+                  color: isActiveTurn 
+                      ? const Color(0xFF10B981) // Green border for active turn
+                      : isLeader
+                          ? const Color(0xFFF59E0B).withValues(alpha: 0.5)
+                          : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                  width: isActiveTurn ? 2.0 : 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: isLeader
-                        ? const Color(0xFFF59E0B).withValues(alpha: 0.1)
-                        : Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                    color: isActiveTurn
+                        ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                        : isLeader
+                            ? const Color(0xFFF59E0B).withValues(alpha: 0.1)
+                            : Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
                     blurRadius: 24,
                     spreadRadius: 2,
                   ),
@@ -65,11 +174,32 @@ class SinglePlayerView extends StatelessWidget {
               ),
               child: Column(
                 children: [
+                  // Active Turn Indicator
+                  if (isActiveTurn)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        '¡TU TURNO!',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF10B981),
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+
                   // Name
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (isLeader)
+                      if (isLeader && !isActiveTurn)
                         const Padding(
                           padding: EdgeInsets.only(right: 8),
                           child: Text('👑', style: TextStyle(fontSize: 24)),
@@ -80,13 +210,20 @@ class SinglePlayerView extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
-                            color: isLeader
-                                ? const Color(0xFFFBBF24)
-                                : Theme.of(context).colorScheme.onSurface,
+                            color: isActiveTurn 
+                                ? const Color(0xFF10B981)
+                                : isLeader
+                                    ? const Color(0xFFFBBF24)
+                                    : Theme.of(context).colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (isLeader && isActiveTurn)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 8),
+                          child: Text('👑', style: TextStyle(fontSize: 24)),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -122,7 +259,7 @@ class SinglePlayerView extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 54,
                             fontWeight: FontWeight.w900,
-                            color: const Color(0xFF10B981),
+                            color: isActiveTurn ? const Color(0xFF10B981) : Theme.of(context).colorScheme.primary,
                             height: 1,
                           ),
                         ),
@@ -144,13 +281,14 @@ class SinglePlayerView extends StatelessWidget {
                   // Cacho Grid (Large)
                   Expanded(
                     child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: CachoScoreGrid(
                           scoreCard: player.scoreCard,
                           compact: false,
                           onCellTap: (categoryKey, details) =>
-                              onCategoryTap(player.id, player.name, categoryKey, details),
+                              widget.onCategoryTap(player.id, player.name, categoryKey, details),
                         ),
                       ),
                     ),
@@ -159,45 +297,6 @@ class SinglePlayerView extends StatelessWidget {
               ),
             ),
           ),
-
-          const SizedBox(height: 12),
-
-          // Navigation buttons
-          Row(
-            children: [
-              // Previous
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onPrevious,
-                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                  label: Text(
-                    'Anterior',
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 52),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Next
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: onNext,
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                  label: Text(
-                    'Siguiente',
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(0, 52),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
         ],
       ),
     );
