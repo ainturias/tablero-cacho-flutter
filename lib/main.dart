@@ -6,7 +6,6 @@ import 'services/local_storage_service.dart';
 import 'controllers/game_controller.dart';
 import 'screens/start_screen.dart';
 import 'screens/game_screen.dart';
-import 'screens/final_result_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/settings_service.dart';
 import 'controllers/settings_controller.dart';
@@ -197,9 +196,6 @@ class AppRouter extends StatelessWidget {
     return Consumer<GameController>(
       builder: (context, controller, _) {
         if (controller.currentGame != null) {
-          if (controller.currentGame!.isFinished) {
-            return const FinalResultScreen();
-          }
           return const GameScreen();
         }
         return const StartScreen();

@@ -9,6 +9,7 @@ class SettingsService {
   static const String _keyFastScoring = 'fast_scoring';
   static const String _keyIsDarkMode = 'is_dark_mode';
   static const String _keyLastNames = 'last_names';
+  static const String _keyShowViewSelector = 'show_view_selector';
 
   late Box _box;
 
@@ -20,6 +21,12 @@ class SettingsService {
   
   Future<void> setShowHeader(bool value) async {
     await _box.put(_keyShowHeader, value);
+  }
+
+  bool get showViewSelector => _box.get(_keyShowViewSelector, defaultValue: true);
+  
+  Future<void> setShowViewSelector(bool value) async {
+    await _box.put(_keyShowViewSelector, value);
   }
 
   int get grandesCount => _box.get(_keyGrandesCount, defaultValue: 1);

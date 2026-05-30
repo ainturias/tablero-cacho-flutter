@@ -173,7 +173,38 @@ class GameScreen extends StatelessWidget {
           });
         }
 
-        return Scaffold(
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) return;
+            final shouldPop = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('¿Abandonar partida?'),
+                content: const Text('El progreso se guarda automáticamente. Puedes reanudarla en cualquier momento.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancelar'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      foregroundColor: Theme.of(context).colorScheme.onError,
+                    ),
+                    child: const Text('Salir'),
+                  ),
+                ],
+              ),
+            );
+            if (shouldPop ?? false) {
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+            }
+          },
+          child: Scaffold(
           appBar: AppBar(
             title: const Text(
               'Tablero de Cacho',
@@ -250,10 +281,11 @@ class GameScreen extends StatelessWidget {
             children: [
               if (context.watch<SettingsController>().showHeader)
                 GameSummaryWidget(game: game),
-              ViewModeSelector(
-                currentMode: game.viewMode,
-                onChanged: controller.setViewMode,
-              ),
+              if (context.watch<SettingsController>().showViewSelector)
+                ViewModeSelector(
+                  currentMode: game.viewMode,
+                  onChanged: controller.setViewMode,
+                ),
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
@@ -261,6 +293,7 @@ class GameScreen extends StatelessWidget {
                 ),
               ),
             ],
+          ),
           ),
         );
       },
@@ -281,8 +314,6 @@ class GameScreen extends StatelessWidget {
           key: const ValueKey('single'),
           game: game,
           onCategoryTap: (id, name, catKey, details) => _showScorePicker(context, id, name, catKey, details),
-          onNext: controller.nextPlayer,
-          onPrevious: controller.previousPlayer,
         );
       case ViewMode.list:
         return ListViewWidget(

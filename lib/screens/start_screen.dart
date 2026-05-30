@@ -170,7 +170,7 @@ class _StartScreenState extends State<StartScreen>
                         controller: _namesController,
                         style: GoogleFonts.inter(color: Theme.of(context).colorScheme.onSurface, fontSize: 15),
                         decoration: const InputDecoration(
-                          hintText: 'Alex, Deivid, Jose',
+                          hintText: 'Jose, Mauro, Alex',
                           prefixIcon: Icon(Icons.people_outline, color: Color(0xFF94A3B8)),
                         ),
                         textCapitalization: TextCapitalization.words,
