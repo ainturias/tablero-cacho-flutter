@@ -128,8 +128,10 @@ class GameController extends ChangeNotifier {
       // Only auto-advance if the player we scored is the current active player
       if (playerIndex == _currentGame!.currentPlayerIndex) {
         if (_currentGame!.viewMode == ViewMode.single) {
-          Future.delayed(const Duration(milliseconds: 800), () {
-            if (_currentGame != null && !_currentGame!.isFinished) {
+          Future.delayed(const Duration(milliseconds: 1000), () {
+            if (_currentGame != null &&
+                !_currentGame!.isFinished &&
+                playerIndex == _currentGame!.currentPlayerIndex) {
               _advanceToNextPlayer();
               notifyListeners();
             }

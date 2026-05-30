@@ -7,15 +7,11 @@ import 'cacho_score_grid.dart';
 class SinglePlayerView extends StatefulWidget {
   final Game game;
   final void Function(String playerId, String playerName, String categoryKey, TapDownDetails? details) onCategoryTap;
-  final VoidCallback onNext;
-  final VoidCallback onPrevious;
 
   const SinglePlayerView({
     super.key,
     required this.game,
     required this.onCategoryTap,
-    required this.onNext,
-    required this.onPrevious,
   });
 
   @override
@@ -24,26 +20,55 @@ class SinglePlayerView extends StatefulWidget {
 
 class _SinglePlayerViewState extends State<SinglePlayerView> {
   late PageController _pageController;
+  late int _currentPageIndex;
+  late int _currentPlayerIndex;
+  late int _totalPlayers;
+  static const int _baseOffsetFactor = 10000;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: widget.game.currentPlayerIndex);
+    _totalPlayers = widget.game.players.length;
+    _currentPlayerIndex = widget.game.currentPlayerIndex;
+    _currentPageIndex = _baseOffsetFactor * _totalPlayers + _currentPlayerIndex;
+    _pageController = PageController(initialPage: _currentPageIndex);
   }
 
   @override
   void didUpdateWidget(SinglePlayerView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If the game's active turn changed, animate to that player's page
-    if (widget.game.currentPlayerIndex != oldWidget.game.currentPlayerIndex) {
+    final gameIdChanged = widget.game.id != oldWidget.game.id;
+    final currentTotal = widget.game.players.length;
+    if (gameIdChanged || currentTotal != _totalPlayers) {
+      _totalPlayers = currentTotal;
+      _currentPlayerIndex = widget.game.currentPlayerIndex;
+      _currentPageIndex = _baseOffsetFactor * _totalPlayers + _currentPlayerIndex;
+      _pageController.dispose();
+      _pageController = PageController(initialPage: _currentPageIndex);
+    } else if (widget.game.currentPlayerIndex != _currentPlayerIndex) {
+      _currentPlayerIndex = widget.game.currentPlayerIndex;
+      _currentPageIndex = _getNearestPage(_currentPageIndex, _currentPlayerIndex, _totalPlayers);
       if (_pageController.hasClients) {
         _pageController.animateToPage(
-          widget.game.currentPlayerIndex,
+          _currentPageIndex,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
       }
     }
+  }
+
+  int _getNearestPage(int currentPageIndex, int targetPlayerIndex, int totalPlayers) {
+    if (totalPlayers == 0) return 0;
+    final int currentMod = currentPageIndex % totalPlayers;
+    int diff = targetPlayerIndex - currentMod;
+    final double half = totalPlayers / 2.0;
+    if (diff > half) {
+      diff -= totalPlayers;
+    } else if (diff < -half) {
+      diff += totalPlayers;
+    }
+    return currentPageIndex + diff;
   }
 
   @override
@@ -64,6 +89,17 @@ class _SinglePlayerViewState extends State<SinglePlayerView> {
     }
   }
 
+  void _onPageChanged(int index) {
+    _currentPageIndex = index;
+    if (_totalPlayers == 0) return;
+    final playerIndex = (index % _totalPlayers + _totalPlayers) % _totalPlayers;
+    if (playerIndex != _currentPlayerIndex) {
+      _currentPlayerIndex = playerIndex;
+      // We no longer call setCurrentPlayer here so that swiping/browsing player cards
+      // does not change the game's active turn.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -72,10 +108,12 @@ class _SinglePlayerViewState extends State<SinglePlayerView> {
           child: PageView.builder(
             controller: _pageController,
             physics: const BouncingScrollPhysics(),
-            itemCount: widget.game.players.length,
+            onPageChanged: _onPageChanged,
             itemBuilder: (context, index) {
-              final player = widget.game.players[index];
-              return _buildPlayerCard(context, player, index);
+              if (_totalPlayers == 0) return const SizedBox.shrink();
+              final playerIndex = (index % _totalPlayers + _totalPlayers) % _totalPlayers;
+              final player = widget.game.players[playerIndex];
+              return _buildPlayerCard(context, player, playerIndex);
             },
           ),
         ),
@@ -130,25 +168,25 @@ class _SinglePlayerViewState extends State<SinglePlayerView> {
     final totalPlayers = widget.game.players.length;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       child: Column(
         children: [
           // Player indicator
           Text(
             'Jugador $playerNumber de $totalPlayers',
             style: GoogleFonts.inter(
-              fontSize: 13,
+              fontSize: 12,
               color: const Color(0xFF64748B),
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Main card
           Expanded(
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
@@ -177,7 +215,7 @@ class _SinglePlayerViewState extends State<SinglePlayerView> {
                   // Active Turn Indicator
                   if (isActiveTurn)
                     Container(
-                      margin: const EdgeInsets.only(bottom: 8),
+                      margin: const EdgeInsets.only(bottom: 4),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFF10B981).withValues(alpha: 0.15),
@@ -202,13 +240,13 @@ class _SinglePlayerViewState extends State<SinglePlayerView> {
                       if (isLeader && !isActiveTurn)
                         const Padding(
                           padding: EdgeInsets.only(right: 8),
-                          child: Text('👑', style: TextStyle(fontSize: 24)),
+                          child: Text('👑', style: TextStyle(fontSize: 20)),
                         ),
                       Flexible(
                         child: Text(
                           player.name,
                           style: GoogleFonts.inter(
-                            fontSize: 26,
+                            fontSize: 22,
                             fontWeight: FontWeight.w800,
                             color: isActiveTurn 
                                 ? const Color(0xFF10B981)
@@ -222,15 +260,15 @@ class _SinglePlayerViewState extends State<SinglePlayerView> {
                       if (isLeader && isActiveTurn)
                         const Padding(
                           padding: EdgeInsets.only(left: 8),
-                          child: Text('👑', style: TextStyle(fontSize: 24)),
+                          child: Text('👑', style: TextStyle(fontSize: 20)),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
 
                   // Total points / Grande 2 win state
                   if (player.isWinnerByDormida) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
@@ -241,13 +279,13 @@ class _SinglePlayerViewState extends State<SinglePlayerView> {
                       child: Text(
                         'GANÓ GRANDE 2 🏆',
                         style: GoogleFonts.inter(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFFFBBF24),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                   ] else ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -257,7 +295,7 @@ class _SinglePlayerViewState extends State<SinglePlayerView> {
                         Text(
                           '${player.total}',
                           style: GoogleFonts.inter(
-                            fontSize: 54,
+                            fontSize: 42,
                             fontWeight: FontWeight.w900,
                             color: isActiveTurn ? const Color(0xFF10B981) : Theme.of(context).colorScheme.primary,
                             height: 1,
@@ -267,7 +305,7 @@ class _SinglePlayerViewState extends State<SinglePlayerView> {
                         Text(
                           'pts',
                           style: GoogleFonts.inter(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: const Color(0xFF94A3B8),
                             fontWeight: FontWeight.w500,
                           ),
@@ -276,7 +314,7 @@ class _SinglePlayerViewState extends State<SinglePlayerView> {
                     ),
                   ],
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
                   // Cacho Grid (Large)
                   Expanded(

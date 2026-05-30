@@ -314,8 +314,6 @@ class GameScreen extends StatelessWidget {
           key: const ValueKey('single'),
           game: game,
           onCategoryTap: (id, name, catKey, details) => _showScorePicker(context, id, name, catKey, details),
-          onNext: controller.nextPlayer,
-          onPrevious: controller.previousPlayer,
         );
       case ViewMode.list:
         return ListViewWidget(
